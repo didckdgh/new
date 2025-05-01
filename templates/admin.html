@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>관리자 페이지</title>
+</head>
+<body>
+    <h2>사용자</h2>
+    <table>
+        {% for user in users %}
+            <tr>
+                <td>이름: {{ user.name }}</td>
+                <td>전화번호: {{ user.phone }}</td>
+                <td>주소: {{ user.address }}</td>
+                <td>제출 시각: {{ user.submitted_at }}</td>
+                <td>
+                    <img src="/static/{{ user.photo_path }}" alt="사진" width="150" />
+                </td>
+                <td>
+                    <form action="/delete/{{ loop.index0 }}" method="post" style="margin-top: 10px;">
+                        <button type="submit" onclick="return confirm('정말 삭제할까요? 삭제된 항목은 휴지통으로 이동됩니다.')">🗑️ 삭제</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+
+    <hr>
+
+    <h2>🗑️ 휴지통</h2>
+    <table>
+        <tr>
+            <th>이름</th>
+            <th>전화번호</th>
+            <th>주소</th>
+            <th>사진</th>
+            <th>삭제된 시간</th>
+            <th>복원</th>
+        </tr>
+        {% for user in trash_data %}
+        <tr>
+            <td>{{ user.name }}</td>
+            <td>{{ user.phone }}</td>
+            <td>{{ user.address }}</td>
+            <td><img src="/static/{{ user.photo_path }}" width="100"></td>
+            <td>{{ user.deleted_at }}</td>
+            <td>
+                <form action="/restore/{{ loop.index0 }}" method="post">
+                    <button type="submit">복원</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <hr>
+    <h2>휴지통 비우기</h2>
+    <form action="/empty_trash" method="post">
+        <button type="submit" onclick="return confirm('휴지통을 비우시겠습니까? 모든 항목이 영구 삭제됩니다.')">휴지통 비우기</button>
+    </form>
+</body>
+</html>

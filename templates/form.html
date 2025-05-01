@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사용자 정보 입력</title>
+    <script>
+        window.onload = function() {
+            // 쿠키에서 "message" 값 가져오기
+            const message = document.cookie.replace(/(?:(?:^|.*;\s*)message\s*=\s*([^;]*).*$)|^.*$/, "$1");
+
+            if (message) {
+                alert(decodeURIComponent(atob(message)));  // base64 디코딩 후 알림창으로 메시지 표시
+                document.cookie = "message=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";  // 쿠키 삭제
+            }
+        };
+    </script>
+</head>
+<body>
+    <h1>사용자 정보 입력</h1>
+    <form action="/submit" method="post" enctype="multipart/form-data">
+        <label for="name">이름:</label>
+        <input type="text" name="name" required><br><br>
+        
+        <label for="phone">전화번호:</label>
+        <input type="text" name="phone" required><br><br>
+        
+        <label for="address">주소:</label>
+        <input type="text" name="address" required><br><br>
+        
+        <label for="photo">사진:</label>
+        <input type="file" name="photo" required><br><br>
+        
+        <button type="submit">제출</button>
+    </form>
+
+    <script>
+        window.onload = function() {
+            // 쿠키에서 "message" 값 가져오기
+            const message = document.cookie.replace(/(?:(?:^|.*;\s*)message\s*=\s*([^;]*).*$)|^.*$/, "$1");
+    
+            if (message) {
+                // 메시지 디코딩 후 팝업창에 표시
+                alert(decodeURIComponent(atob(message)));  
+                document.cookie = "message=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";  // 쿠키 삭제
+            }
+        };
+    </script>
+    
+
+    
+</body>
+</html>
