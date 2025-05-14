@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>장바구니</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>장바구니</h1>
+        </div>
+        <div class="cart-btn">
+            <a href="/ ">상품 목록</a>
+        </div>
+    </header>
+
+    <main>
+        <section class="cart-items">
+            <ul id="cart-items">
+                <!-- 장바구니 아이템 목록 -->
+            </ul>
+            <p id="total-price">총 금액: 0원</p>
+            <button onclick="clearCart()">장바구니 비우기</button>
+            <form action="/form">
+                <button type="submit">구매하기</button>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2025 상품 판매 웹사이트</p>
+    </footer>
+
+    <!-- 장바구니 옵션 수정 모달 -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeEditModal()">×</span>
+            <h2>장바구니 수정</h2>
+            
+            <!-- 여기에 이미지 추가 -->
+            <img id="edit-modal-image" src="" alt="상품 이미지" style="width: 200px; height: auto; margin-bottom: 10px;">
+            
+            <label for="edit-quantity">수량:</label>
+            <input type="number" id="edit-quantity" value="1" min="1" onchange="updatePrice()">
+            <label for="edit-option">옵션 선택:</label>
+            <select id="edit-option" onchange="updatePrice()"></select>
+            <p>가격: <span id="edit-price"></span>원</p>
+            <button onclick="updateCartItem()">장바구니에 업데이트</button>
+        </div>
+    </div>
+
+    
+
+    <script src="/static/cart-script.js"></script>
+</body>
+</html>

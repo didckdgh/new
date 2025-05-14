@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>쇼핑몰</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>쇼핑몰</h1>
+        </div>
+        <div class="cart-btn">
+            <a href="/cart">장바구니</a>
+        </div>
+        <div class="search-container">
+            <input type="text" id="search" placeholder="상품 검색" onkeyup="searchProducts()">
+        </div>
+    </header>
+
+    <main>
+        <section class="category-nav">
+            <button onclick="filterCategory('all')">전체</button>
+            <button onclick="filterCategory('category1')">카테고리 1</button>
+            <button onclick="filterCategory('category2')">카테고리 2</button>
+            <button onclick="filterCategory('category3')">카테고리 3</button>
+        </section>
+
+        <section class="product-list" id="product-list">
+            <!-- 상품 목록이 동적으로 추가될 곳 -->
+        </section>
+    </main>
+
+    {% if message %}
+    <script>
+        alert("{{ message }}");
+    </script>
+    {% endif %}
+
+    <footer>
+        <p>© 2025 모던 쇼핑몰</p>
+    </footer>
+
+    <!-- ✅ 성공 메시지 alert -->
+    <script>
+    const cookies = document.cookie.split(";").map(c => c.trim());
+    const messageCookie = cookies.find(c => c.startsWith("message="));
+    if (messageCookie) {
+      const message = decodeURIComponent(messageCookie.split("=")[1]);
+      alert(message);
+      document.cookie = "message=; Max-Age=0; path=/";
+    }
+    </script>
+
+    <!-- 옵션 선택 모달 -->
+    <div id="option-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeOptionModal()">×</span>
+      <h2>옵션 선택</h2>
+  
+      <!-- 🔥 이미지 추가 (여기!!) -->
+      <img id="option-modal-image" src="" alt="상품 이미지" style="width: 200px; height: auto; margin-bottom: 10px;">
+  
+      <label for="quantity">수량:</label>
+      <input type="number" id="quantity" value="1" min="1" onchange="updateOptionPrice()">
+      <label for="option">옵션 선택:</label>
+      <select id="option" onchange="updateOptionPrice()"></select>
+      <p>가격: <span id="price"></span>원</p>
+      <button onclick="addToCartWithOptions()">장바구니에 담기</button>
+    </div>
+  </div>
+  
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

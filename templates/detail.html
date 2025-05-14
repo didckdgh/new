@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>상품 상세</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header>
+    <h1 id="product-name">상품 이름</h1>
+  </header>
+
+  <main>
+    <div class="slider-container" id="image-slider"></div>
+    <p id="product-description">상세 설명 로딩 중...</p>
+
+    <label for="option-select">옵션:</label>
+    <select id="option-select" onchange="updatePrice()"></select>
+
+    <label for="quantity">수량:</label>
+    <input type="number" id="quantity" min="1" value="1" onchange="updatePrice()">
+
+    <p>총 가격: <span id="total-price">0</span>원</p>
+    <button onclick="addToCart()">장바구니에 담기</button>
+  </main>
+
+  <script src="/static/products.js"></script>
+  <script src="/static/detail.js"></script>
+</body>
+</html>
