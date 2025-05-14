@@ -81,7 +81,7 @@ async def submit_user(
         "phone": phone,
         "address": address,
         "photo_path": f"uploads/{photo.filename}",
-        "submitted_at": (datetime.now() + timedelta(hours=12)).strftime("%Y-%m-%d %H:%M:%S")
+        "submitted_at": (datetime.now() + timedelta()).strftime("%Y-%m-%d %H:%M:%S")
     })
 
     response = RedirectResponse("/", status_code=302)
