@@ -3,56 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>장바구니</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <title>장바구니 - TechMart</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+    <style>
+        .header {
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #1e90ff;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .logo img {
+            height: 40px;
+            margin-right: 0.5rem;
+        }
+
+        .search-container {
+            flex: 1;
+            max-width: 600px;
+            margin: 0 2rem;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid #1e90ff;
+            border-radius: 4px;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #0066cc;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .nav-link:hover {
+            background-color: #dad7d7;
+        }
+
+        .nav-link img {
+            width: 24px;
+            height: 24px;
+            margin-right: 0.5rem;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* 기존 스타일 유지 */
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <h1>장바구니</h1>
-        </div>
-        <div class="cart-btn">
-            <a href="/ ">상품 목록</a>
+    <header class="header">
+        <div class="header-container">
+            <a href="{{ url_for('read_index') }}" class="logo">
+                <img src="{{ url_for('static', path='images/logo.svg') }}" alt="TechMart Logo">
+                TechMart
+            </a>
+
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="search-input" class="search-input" placeholder="찾으시는 상품을 검색해보세요">
+                    <button class="button button-primary" onclick="window.location.href='/'">검색</button>
+                </div>
+            </div>
+
+            <nav class="nav-links">
+                <a href="{{ url_for('read_cart') }}" class="nav-link">
+                    <img src="{{ url_for('static', path='images/cart.svg') }}" alt="장바구니">
+                    장바구니
+                </a>
+                <a href="{{ url_for('view_orders') }}" class="nav-link">
+                    <img src="{{ url_for('static', path='images/order.svg') }}" alt="주문내역">
+                    주문내역
+                </a>
+            </nav>
         </div>
     </header>
 
-    <main>
-        <section class="cart-items">
-            <ul id="cart-items">
+    <main class="main-content">
+        <div class="navigation">
+            <a href="{{ url_for('read_index') }}">홈</a>
+            <span>></span>
+            <span>장바구니</span>
+        </div>
+
+        <div class="card">
+            <div id="cart-items">
                 <!-- 장바구니 아이템 목록 -->
-            </ul>
-            <p id="total-price">총 금액: 0원</p>
-            <button onclick="clearCart()">장바구니 비우기</button>
-            <form action="/form">
-                <button type="submit">구매하기</button>
-            </form>
-        </section>
+            </div>
+            <div class="cart-summary">
+                <p id="total-price">총 금액: 0원</p>
+                <div class="button-group">
+                    <button id="clear-cart-btn" onclick="window.clearCart()" class="button button-outline">장바구니 비우기</button>
+                    <form action="{{ url_for('read_form') }}" method="get" style="flex: 1;">
+                        <button type="submit" class="button button-primary" style="width: 100%">구매하기</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </main>
 
-    <footer>
-        <p>© 2025 상품 판매 웹사이트</p>
-    </footer>
-
-    <!-- 장바구니 옵션 수정 모달 -->
+    <!-- 수정 모달 -->
     <div id="edit-modal" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="closeEditModal()">×</span>
+            <span class="close-btn" onclick="document.getElementById('edit-modal').style.display='none'">&times;</span>
             <h2>장바구니 수정</h2>
             
-            <!-- 여기에 이미지 추가 -->
-            <img id="edit-modal-image" src="" alt="상품 이미지" style="width: 200px; height: auto; margin-bottom: 10px;">
+            <div class="form-group">
+                <img id="edit-modal-image" src="" alt="상품 이미지" style="width: 100%; max-width: 300px; height: auto; margin-bottom: 10px;">
+            </div>
             
-            <label for="edit-quantity">수량:</label>
-            <input type="number" id="edit-quantity" value="1" min="1" onchange="updatePrice()">
-            <label for="edit-option">옵션 선택:</label>
-            <select id="edit-option" onchange="updatePrice()"></select>
+            <div class="form-group">
+                <label for="edit-quantity">수량</label>
+                <input type="number" id="edit-quantity" class="form-control" value="1" min="1">
+            </div>
+
+            <div class="form-group">
+                <label for="edit-option">옵션 선택</label>
+                <select id="edit-option" class="form-control"></select>
+            </div>
+
             <p>가격: <span id="edit-price"></span>원</p>
-            <button onclick="updateCartItem()">장바구니에 업데이트</button>
+            
+            <div class="button-group">
+                <button onclick="window.updateCartItem()" class="button button-primary">수정 완료</button>
+            </div>
         </div>
     </div>
 
-    
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-info">
+                <h3>TechMart 소개</h3>
+                <p>최고의 IT 제품을 합리적인 가격으로 만나보세요.</p>
+                <p>고객 만족을 최우선으로 생각하는 TechMart입니다.</p>
+            </div>
+            <div class="footer-contact">
+                <h3>고객 문의</h3>
+                <div class="contact-info">
+                    <p>이메일: <a href="mailto:support@techmart.com">support@techmart.com</a></p>
+                    <p>전화: <a href="tel:1544-0000">1544-0000</a></p>
+                    <p>운영시간: 평일 09:00 - 18:00</p>
+                </div>
+            </div>
+        </div>
+    </footer>
 
-    <script src="/static/cart-script.js"></script>
+    <script src="{{ url_for('static', path='data.js') }}"></script>
+    <script src="{{ url_for('static', path='cart.js') }}"></script>
 </body>
 </html>

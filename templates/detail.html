@@ -2,29 +2,357 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>상품 상세</title>
-  <link rel="stylesheet" href="/static/styles.css">
+  <title>상품 상세 - TechMart</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+  <style>
+    .header {
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+
+    .header-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .logo {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        color: #1e90ff;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .logo img {
+        height: 40px;
+        margin-right: 0.5rem;
+    }
+
+    .search-container {
+        flex: 1;
+        max-width: 600px;
+        margin: 0 2rem;
+        padding: 0.5rem;
+        background-color: #f8f9fa;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+    }
+
+    .search-box {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .search-input {
+        flex: 1;
+        padding: 0.5rem 0.75rem;
+        border: none;
+        background: transparent;
+        font-size: 1rem;
+        width: 100%;
+        line-height: 1.5;
+        height: 38px;
+    }
+
+    .search-input:focus {
+        outline: none;
+    }
+
+    .search-box .button {
+        height: 38px;
+        display: flex;
+        align-items: center;
+        padding: 0 1rem;
+        white-space: nowrap;
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        color: #333;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+    }
+
+    .nav-link:hover {
+        background-color: #f0f0f0;
+    }
+
+    .nav-link img {
+        width: 24px;
+        height: 24px;
+        margin-right: 0.5rem;
+    }
+
+    .main-content {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        min-height: calc(100vh - 400px);
+        padding-bottom: 60px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .product-header {
+      border-bottom: 1px solid #eee;
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+    }
+    .product-main {
+      display: flex;
+      gap: 40px;
+    }
+    .product-images {
+      flex: 1;
+      max-width: 500px;
+    }
+    .product-info {
+      flex: 1;
+    }
+    .slider-container {
+      width: 100%;
+      overflow: hidden;
+    }
+    .slider-container img {
+      width: 100%;
+      height: auto;
+    }
+    .thumbnail-list {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .thumbnail-list img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      cursor: pointer;
+      border: 1px solid #ddd;
+    }
+    .product-title {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .price-info {
+      background-color: #f8f8f8;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+    }
+    .final-price {
+      font-size: 28px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .option-group {
+      margin-bottom: 20px;
+    }
+    .option-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+    .option-group select,
+    .option-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .total-price {
+      font-size: 20px;
+      font-weight: bold;
+      text-align: right;
+      margin: 20px 0;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+    }
+    .button-group button {
+      flex: 1;
+      padding: 15px;
+      font-size: 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .cart-button {
+      background-color: #fff;
+      border: 1px solid #1e90ff !important;
+      color: #1e90ff;
+    }
+    .buy-button {
+      background-color: #1e90ff;
+      color: white;
+    }
+    .navigation {
+      margin-bottom: 20px;
+    }
+    .navigation a {
+      color: #666;
+      text-decoration: none;
+    }
+    .navigation span {
+      color: #999;
+      margin: 0 8px;
+    }
+    .divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, #e0e0e0, transparent);
+      margin: 0;
+      padding: 0;
+      border: none;
+    }
+
+    .product-detail {
+      margin-top: 40px;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .product-detail h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    #product-description {
+      line-height: 1.8;
+      color: #666;
+    }
+
+    .footer {
+      background-color: #f8f9fa;
+      padding: 40px 0;
+      margin-top: auto;
+      border-top: 1px solid #e0e0e0;
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <h1 id="product-name">상품 이름</h1>
+  <header class="header">
+    <div class="header-container">
+        <a href="{{ url_for('read_index') }}" class="logo">
+            <img src="{{ url_for('static', path='images/logo.svg') }}" alt="TechMart Logo">
+            TechMart
+        </a>
+
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="search-input" class="search-input" placeholder="찾으시는 상품을 검색해보세요">
+                <button class="button button-primary" onclick="window.location.href='/'">검색</button>
+            </div>
+        </div>
+
+        <nav class="nav-links">
+            <a href="{{ url_for('read_cart') }}" class="nav-link">
+                <img src="{{ url_for('static', path='images/cart.svg') }}" alt="장바구니">
+                장바구니
+            </a>
+            <a href="{{ url_for('view_orders') }}" class="nav-link">
+                <img src="{{ url_for('static', path='images/order.svg') }}" alt="주문내역">
+                주문내역
+            </a>
+        </nav>
+    </div>
   </header>
 
-  <main>
-    <div class="slider-container" id="image-slider"></div>
-    <p id="product-description">상세 설명 로딩 중...</p>
+  <hr class="divider">
 
-    <label for="option-select">옵션:</label>
-    <select id="option-select" onchange="updatePrice()"></select>
+  <main class="main-content">
+    <div class="navigation">
+      <a href="/">홈</a>
+      <span>></span>
+      <a href="#" id="category-name">카테고리</a>
+    </div>
 
-    <label for="quantity">수량:</label>
-    <input type="number" id="quantity" min="1" value="1" onchange="updatePrice()">
+    <div class="product-main">
+      <div class="product-images">
+        <div class="slider-container" id="image-slider"></div>
+        <div class="thumbnail-list" id="thumbnail-list"></div>
+      </div>
 
-    <p>총 가격: <span id="total-price">0</span>원</p>
-    <button onclick="addToCart()">장바구니에 담기</button>
+      <div class="product-info">
+        <h1 class="product-title" id="product-name">상품 이름</h1>
+        
+        <div class="price-info">
+          <div class="final-price" id="total-price">29,500원</div>
+        </div>
+
+        <div class="option-group">
+          <label for="option-select">옵션 선택</label>
+          <select id="option-select" onchange="updatePrice()"></select>
+        </div>
+
+        <div class="option-group">
+          <label for="quantity">수량</label>
+          <input type="number" id="quantity" min="1" value="1" onchange="updatePrice()">
+        </div>
+
+        <div class="total-price">
+          총 상품 금액: <span id="final-total-price">0</span>원
+        </div>
+
+        <div class="button-group">
+          <button class="cart-button" onclick="addToCart()">장바구니</button>
+          <button class="buy-button" onclick="buyNow()">구매하기</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="product-detail">
+      <h2>상품 상세 정보</h2>
+      <div id="product-description">상세 설명 로딩 중...</div>
+    </div>
   </main>
 
-  <script src="/static/products.js"></script>
-  <script src="/static/detail.js"></script>
+  <footer class="footer">
+    <div class="footer-content">
+        <div class="footer-info">
+            <h3>TechMart 소개</h3>
+            <p>최고의 IT 제품을 합리적인 가격으로 만나보세요.</p>
+            <p>고객 만족을 최우선으로 생각하는 TechMart입니다.</p>
+        </div>
+        <div class="footer-contact">
+            <h3>고객 문의</h3>
+            <div class="contact-info">
+                <p>이메일: <a href="mailto:support@techmart.com">support@techmart.com</a></p>
+                <p>전화: <a href="tel:1544-0000">1544-0000</a></p>
+                <p>운영시간: 평일 09:00 - 18:00</p>
+            </div>
+        </div>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', path='data.js') }}"></script>
+  <script src="{{ url_for('static', path='detail.js') }}"></script>
 </body>
 </html>

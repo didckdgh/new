@@ -1,61 +1,393 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>관리자 페이지</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+    <style>
+        .order-section {
+            margin-bottom: 2rem;
+        }
+        .order-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .order-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .cart-item {
+            border-bottom: 1px solid #eee;
+            padding: 0.5rem 0;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+        .cart-item:hover {
+            background-color: #f8f9fa;
+        }
+        .product-link {
+            display: block;
+            padding: 0.5rem;
+            border-radius: 4px;
+            text-decoration: none;
+            color: inherit;
+        }
+        .product-link:hover {
+            background-color: #f0f0f0;
+        }
+        .total-amount {
+            font-weight: bold;
+            color: #1e90ff;
+            margin-top: 1rem;
+        }
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .tab-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .tab-button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: #f0f0f0;
+        }
+        .tab-button.active {
+            background: #1e90ff;
+            color: white;
+        }
+    </style>
 </head>
 <body>
-    <h2>사용자</h2>
-    <table>
-        {% for user in users %}
-            <tr>
-                <td>이름: {{ user.name }}</td>
-                <td>전화번호: {{ user.phone }}</td>
-                <td>주소: {{ user.address }}</td>
-                <td>제출 시각: {{ user.submitted_at }}</td>
-                <td>
-                    <img src="/static/{{ user.photo_path }}" alt="사진" width="150" />
-                </td>
-                <td>
-                    <form action="/delete/{{ loop.index0 }}" method="post" style="margin-top: 10px;">
-                        <button type="submit" onclick="return confirm('정말 삭제할까요? 삭제된 항목은 휴지통으로 이동됩니다.')">🗑️ 삭제</button>
-                    </form>
-                </td>
-            </tr>
-        {% endfor %}
-    </table>
+    <header class="header">
+        <div class="container">
+            <h1>관리자 페이지</h1>
+            <nav>
+                <a href="{{ url_for('read_index') }}" class="button button-outline">홈으로</a>
+            </nav>
+        </div>
+    </header>
 
-    <hr>
+    <main class="container">
+        <div class="tab-buttons">
+            <button class="tab-button active" onclick="showSection('pending')">승인 전</button>
+            <button class="tab-button" onclick="showSection('in-delivery')">배송 중</button>
+            <button class="tab-button" onclick="showSection('completed')">배송 완료</button>
+            <button class="tab-button" onclick="showSection('cancelled')">주문 취소</button>
+            <button class="tab-button" onclick="showSection('trash')">휴지통</button>
+        </div>
 
-    <h2>🗑️ 휴지통</h2>
-    <table>
-        <tr>
-            <th>이름</th>
-            <th>전화번호</th>
-            <th>주소</th>
-            <th>사진</th>
-            <th>삭제된 시간</th>
-            <th>복원</th>
-        </tr>
-        {% for user in trash_data %}
-        <tr>
-            <td>{{ user.name }}</td>
-            <td>{{ user.phone }}</td>
-            <td>{{ user.address }}</td>
-            <td><img src="/static/{{ user.photo_path }}" width="100"></td>
-            <td>{{ user.deleted_at }}</td>
-            <td>
-                <form action="/restore/{{ loop.index0 }}" method="post">
-                    <button type="submit">복원</button>
-                </form>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
+        <!-- 승인 전 주문 -->
+        <section id="pending" class="order-section">
+            <h2>승인 전 주문</h2>
+            <div class="order-grid">
+                {% for order in pending_orders %}
+                <div class="order-card">
+                    <h3>주문자: {{ order.name }}</h3>
+                    <p>전화번호: {{ order.phone }}</p>
+                    <p>주소: {{ order.address }}</p>
+                    <p>주문 시간: {{ order.submitted_at }}</p>
+                    <img src="{{ url_for('static', path=order.photo_path) }}" alt="신분증" style="max-width: 200px;">
+                    <h4>주문 상품:</h4>
+                    {% for item in order.cart_items %}
+                    <div class="cart-item">
+                        <a href="{{ url_for('read_detail') }}?name={{ item.name|urlencode }}" class="product-link">
+                            <p>상품명: {{ item.name }}</p>
+                            <p>옵션: {{ item.option }}</p>
+                            <p>수량: {{ item.quantity }}</p>
+                            <p>가격: {{ "{:,}".format(item.totalPrice) }}원</p>
+                        </a>
+                    </div>
+                    {% endfor %}
+                    <div class="total-amount">총 금액: {{ "{:,}".format(order.total_amount) }}원</div>
+                    <div class="button-group">
+                        <form action="{{ url_for('approve_order', order_index=loop.index0) }}" method="post" style="flex: 1;">
+                            <button type="submit" class="button button-primary">승인</button>
+                        </form>
+                        <form action="{{ url_for('delete_order', category='pending', order_index=loop.index0) }}" method="post">
+                            <button type="submit" class="button button-outline">삭제</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
 
-    <hr>
-    <h2>휴지통 비우기</h2>
-    <form action="/empty_trash" method="post">
-        <button type="submit" onclick="return confirm('휴지통을 비우시겠습니까? 모든 항목이 영구 삭제됩니다.')">휴지통 비우기</button>
-    </form>
+        <!-- 배송 중 주문 -->
+        <section id="in-delivery" class="order-section" style="display: none;">
+            <h2>배송 중 주문</h2>
+            <div class="order-grid">
+                {% for order in in_delivery_orders %}
+                <div class="order-card">
+                    <h3>주문자: {{ order.name }}</h3>
+                    <p>전화번호: {{ order.phone }}</p>
+                    <p>주소: {{ order.address }}</p>
+                    <p>주문 시간: {{ order.submitted_at }}</p>
+                    <p>승인 시간: {{ order.approved_at }}</p>
+                    <img src="{{ url_for('static', path=order.photo_path) }}" alt="신분증" style="max-width: 200px;">
+                    <h4>주문 상품:</h4>
+                    {% for item in order.cart_items %}
+                    <div class="cart-item">
+                        <a href="{{ url_for('read_detail') }}?name={{ item.name|urlencode }}" class="product-link">
+                            <p>상품명: {{ item.name }}</p>
+                            <p>옵션: {{ item.option }}</p>
+                            <p>수량: {{ item.quantity }}</p>
+                            <p>가격: {{ "{:,}".format(item.totalPrice) }}원</p>
+                        </a>
+                    </div>
+                    {% endfor %}
+                    <div class="total-amount">총 금액: {{ "{:,}".format(order.total_amount) }}원</div>
+                    <div class="button-group">
+                        <form action="{{ url_for('complete_order', order_index=loop.index0) }}" method="post" style="flex: 1;">
+                            <button type="submit" class="button button-primary">배송 완료</button>
+                        </form>
+                        <form action="{{ url_for('delete_order', category='in_delivery', order_index=loop.index0) }}" method="post">
+                            <button type="submit" class="button button-outline">삭제</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- 배송 완료 주문 -->
+        <section id="completed" class="order-section" style="display: none;">
+            <h2>배송 완료 주문</h2>
+            <div class="order-grid">
+                {% for order in completed_orders %}
+                <div class="order-card">
+                    <h3>주문자: {{ order.name }}</h3>
+                    <p>전화번호: {{ order.phone }}</p>
+                    <p>주소: {{ order.address }}</p>
+                    <p>주문 시간: {{ order.submitted_at }}</p>
+                    <p>승인 시간: {{ order.approved_at }}</p>
+                    <p>완료 시간: {{ order.completed_at }}</p>
+                    <img src="{{ url_for('static', path=order.photo_path) }}" alt="신분증" style="max-width: 200px;">
+                    <h4>주문 상품:</h4>
+                    {% for item in order.cart_items %}
+                    <div class="cart-item">
+                        <a href="{{ url_for('read_detail') }}?name={{ item.name|urlencode }}" class="product-link">
+                            <p>상품명: {{ item.name }}</p>
+                            <p>옵션: {{ item.option }}</p>
+                            <p>수량: {{ item.quantity }}</p>
+                            <p>가격: {{ "{:,}".format(item.totalPrice) }}원</p>
+                        </a>
+                    </div>
+                    {% endfor %}
+                    <div class="total-amount">총 금액: {{ "{:,}".format(order.total_amount) }}원</div>
+                    <div class="button-group">
+                        <form action="{{ url_for('delete_order', category='completed', order_index=loop.index0) }}" method="post">
+                            <button type="submit" class="button button-outline">삭제</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- 취소된 주문 -->
+        <section id="cancelled" class="order-section" style="display: none;">
+            <h2>취소된 주문</h2>
+            <div class="order-grid">
+                {% for order in cancelled_orders %}
+                <div class="order-card">
+                    <h3>주문자: {{ order.name }}</h3>
+                    <p>전화번호: {{ order.phone }}</p>
+                    <p>주소: {{ order.address }}</p>
+                    <p>주문 시간: {{ order.submitted_at }}</p>
+                    <p>취소 시간: {{ order.deleted_at }}</p>
+                    <img src="{{ url_for('static', path=order.photo_path) }}" alt="신분증" style="max-width: 200px;">
+                    <h4>주문 상품:</h4>
+                    {% for item in order.cart_items %}
+                    <div class="cart-item">
+                        <a href="{{ url_for('read_detail') }}?name={{ item.name|urlencode }}" class="product-link">
+                            <p>상품명: {{ item.name }}</p>
+                            <p>옵션: {{ item.option }}</p>
+                            <p>수량: {{ item.quantity }}</p>
+                            <p>가격: {{ "{:,}".format(item.totalPrice) }}원</p>
+                        </a>
+                    </div>
+                    {% endfor %}
+                    <div class="total-amount">총 금액: {{ "{:,}".format(order.total_amount) }}원</div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- 휴지통 -->
+        <section id="trash" class="order-section" style="display: none;">
+            <h2>휴지통</h2>
+            <form action="{{ url_for('empty_trash') }}" method="post" style="margin-bottom: 1rem;">
+                <button type="submit" class="button button-outline">휴지통 비우기</button>
+            </form>
+            <div class="order-grid">
+                {% for order in trash_data %}
+                <div class="order-card">
+                    <h3>주문자: {{ order.name }}</h3>
+                    <p>전화번호: {{ order.phone }}</p>
+                    <p>주소: {{ order.address }}</p>
+                    <p>주문 시간: {{ order.submitted_at }}</p>
+                    {% if order.approved_at %}
+                    <p>승인 시간: {{ order.approved_at }}</p>
+                    {% endif %}
+                    {% if order.completed_at %}
+                    <p>완료 시간: {{ order.completed_at }}</p>
+                    {% endif %}
+                    <p>삭제 시간: {{ order.deleted_at }}</p>
+                    <img src="{{ url_for('static', path=order.photo_path) }}" alt="신분증" style="max-width: 200px;">
+                    <h4>주문 상품:</h4>
+                    {% for item in order.cart_items %}
+                    <div class="cart-item">
+                        <a href="{{ url_for('read_detail') }}?name={{ item.name|urlencode }}" class="product-link">
+                            <p>상품명: {{ item.name }}</p>
+                            <p>옵션: {{ item.option }}</p>
+                            <p>수량: {{ item.quantity }}</p>
+                            <p>가격: {{ "{:,}".format(item.totalPrice) }}원</p>
+                        </a>
+                    </div>
+                    {% endfor %}
+                    <div class="total-amount">총 금액: {{ "{:,}".format(order.total_amount) }}원</div>
+                    <div class="button-group">
+                        <form action="{{ url_for('restore_order', trash_index=loop.index0) }}" method="post">
+                            <button type="submit" class="button button-primary">복원</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // 주문 데이터 가져오기
+        async function fetchAdminOrders() {
+            try {
+                const response = await fetch('/api/admin/orders');
+                if (!response.ok) {
+                    throw new Error('주문 데이터를 가져오는데 실패했습니다.');
+                }
+                const data = await response.json();
+                updateOrderSections(data);
+            } catch (error) {
+                console.error('Error fetching admin orders:', error);
+            }
+        }
+
+        // 주문 섹션 업데이트
+        function updateOrderSections(data) {
+            const sections = ['pending', 'in-delivery', 'completed', 'cancelled', 'trash'];
+            const orderLists = {
+                'pending': data.pending || [],
+                'in-delivery': data.in_delivery || [],
+                'completed': data.completed || [],
+                'cancelled': data.cancelled || [],
+                'trash': data.trash || []
+            };
+
+            sections.forEach(section => {
+                const sectionElement = document.getElementById(section);
+                if (!sectionElement) return;
+
+                const orders = orderLists[section];
+                if (orders.length === 0) {
+                    sectionElement.querySelector('.order-grid').innerHTML = `
+                        <div class="no-orders">
+                            <p>주문이 없습니다.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const orderGrid = sectionElement.querySelector('.order-grid');
+                if (!orderGrid) return;
+
+                orderGrid.innerHTML = orders.map((order, index) => `
+                    <div class="order-card">
+                        <h3>주문자: ${order.name}</h3>
+                        <p>전화번호: ${order.phone}</p>
+                        <p>주소: ${order.address}</p>
+                        <p>주문 시간: ${order.submitted_at}</p>
+                        ${order.approved_at ? `<p>승인 시간: ${order.approved_at}</p>` : ''}
+                        ${order.completed_at ? `<p>완료 시간: ${order.completed_at}</p>` : ''}
+                        ${order.deleted_at ? `<p>삭제 시간: ${order.deleted_at}</p>` : ''}
+                        <img src="/static/${order.photo_path}" alt="신분증" style="max-width: 200px;">
+                        <h4>주문 상품:</h4>
+                        ${order.cart_items.map(item => `
+                            <div class="cart-item">
+                                <a href="/detail?name=${encodeURIComponent(item.name)}" class="product-link">
+                                    <p>상품명: ${item.name}</p>
+                                    <p>옵션: ${item.option || '없음'}</p>
+                                    <p>수량: ${item.quantity}</p>
+                                    <p>가격: ${item.totalPrice.toLocaleString()}원</p>
+                                </a>
+                            </div>
+                        `).join('')}
+                        <div class="total-amount">총 금액: ${order.total_amount.toLocaleString()}원</div>
+                        <div class="button-group">
+                            ${section === 'pending' ? `
+                                <form action="/approve/${index}" method="post" style="flex: 1;">
+                                    <button type="submit" class="button button-primary">승인</button>
+                                </form>
+                                <form action="/delete_order/pending/${index}" method="post">
+                                    <button type="submit" class="button button-outline">삭제</button>
+                                </form>
+                            ` : section === 'in-delivery' ? `
+                                <form action="/complete/${index}" method="post" style="flex: 1;">
+                                    <button type="submit" class="button button-primary">배송 완료</button>
+                                </form>
+                                <form action="/delete_order/in_delivery/${index}" method="post">
+                                    <button type="submit" class="button button-outline">삭제</button>
+                                </form>
+                            ` : section === 'completed' ? `
+                                <form action="/delete_order/completed/${index}" method="post">
+                                    <button type="submit" class="button button-outline">삭제</button>
+                                </form>
+                            ` : section === 'trash' ? `
+                                <form action="/restore/${index}" method="post">
+                                    <button type="submit" class="button button-primary">복원</button>
+                                </form>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            });
+        }
+
+        // 탭 전환 처리
+        function showSection(sectionId) {
+            document.querySelectorAll('.order-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            document.getElementById(sectionId).style.display = 'block';
+            
+            // 탭 활성화 상태 업데이트
+            document.querySelectorAll('.tab-button').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[onclick="showSection('${sectionId}')"]`).classList.add('active');
+        }
+
+        // 페이지 로드 시 실행
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAdminOrders();
+            // 10초마다 주문 데이터 업데이트
+            setInterval(fetchAdminOrders, 10000);
+            // 기본 탭 표시
+            showSection('pending');
+        });
+    </script>
 </body>
 </html>

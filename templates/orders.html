@@ -1,0 +1,93 @@
+{% extends "layout.html" %}
+
+{% block title %}주문 내역 - TechMart{% endblock %}
+
+{% block content %}
+<div class="navigation">
+    <a href="{{ url_for('read_index') }}">홈</a>
+    <span>></span>
+    <span>주문 내역</span>
+</div>
+
+<div class="order-grid">
+{% for order in orders %}
+    <div class="order-card">
+        <div class="status-badge status-{{ order.status }}">
+            {{ order.status }}
+        </div>
+        <h3>주문자: {{ order.name }}</h3>
+        <p>전화번호: {{ order.phone }}</p>
+        <p>주소: {{ order.address }}</p>
+        <p>주문 시간: {{ order.submitted_at }}</p>
+        {% if order.cart_items %}
+            <h4>주문 상품:</h4>
+            {% for item in order.cart_items %}
+                <a href="{{ url_for('read_detail') }}?name={{ item.name|urlencode }}" class="cart-item">
+                    <p>상품명: {{ item.name }}</p>
+                    <p>옵션: {{ item.option or '없음' }}</p>
+                    <p>수량: {{ item.quantity }}</p>
+                    <p>가격: {{ "{:,}".format(item.totalPrice) }}원</p>
+                </a>
+            {% endfor %}
+            <div class="total-amount">총 금액: {{ "{:,}".format(order.total_amount) }}원</div>
+        {% endif %}
+        <div class="button-group">
+            {% if order.status == "상품준비중" %}
+                <form action="{{ url_for('delete_user_order', category='pending', order_index=loop.index0) }}" 
+                      method="post" style="width: 100%;">
+                    <input type="hidden" name="order_id" value="{{ order.id }}">
+                    <button type="submit" class="delete-button">주문 취소</button>
+                </form>
+            {% elif order.status == "배송완료" %}
+                <form action="{{ url_for('delete_user_order', category='completed', order_index=loop.index0) }}" 
+                      method="post" style="width: 100%;">
+                    <input type="hidden" name="order_id" value="{{ order.id }}">
+                    <button type="submit" class="delete-button">기록 삭제</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+{% else %}
+    <div class="no-orders">
+        <h3>주문 내역이 없습니다</h3>
+        <p>아직 주문하지 않으셨다면, 상품을 구매해보세요!</p>
+        <a href="{{ url_for('read_index') }}" class="button button-primary">쇼핑하러 가기</a>
+    </div>
+{% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('orderSearchInput').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const orderCards = document.querySelectorAll('.order-card');
+    
+    orderCards.forEach(card => {
+        const orderName = card.querySelector('h3').textContent.toLowerCase();
+        const productNames = Array.from(card.querySelectorAll('.cart-item p')).map(p => p.textContent.toLowerCase());
+        
+        const matchesSearch = orderName.includes(searchTerm) || 
+                            productNames.some(name => name.includes(searchTerm));
+        
+        card.style.display = matchesSearch ? 'block' : 'none';
+    });
+
+    // 검색 결과가 없을 때 메시지 표시
+    const noResults = Array.from(orderCards).every(card => card.style.display === 'none');
+    let noResultsMsg = document.querySelector('.no-results');
+    
+    if (noResults && searchTerm) {
+        if (!noResultsMsg) {
+            noResultsMsg = document.createElement('div');
+            noResultsMsg.className = 'no-orders no-results';
+            noResultsMsg.innerHTML = '<h3>검색 결과가 없습니다</h3><p>다른 검색어로 다시 시도해보세요.</p>';
+            document.querySelector('.order-grid').appendChild(noResultsMsg);
+        }
+        noResultsMsg.style.display = 'block';
+    } else if (noResultsMsg) {
+        noResultsMsg.style.display = 'none';
+    }
+});
+</script>
+{% endblock %} 

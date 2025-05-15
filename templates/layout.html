@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TechMart{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <a href="{{ url_for('read_index') }}" class="logo">
+                <img src="{{ url_for('static', path='images/logo.svg') }}" alt="TechMart Logo">
+                TechMart
+            </a>
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" class="search-input" placeholder="검색어를 입력하세요">
+                    <button type="button" class="search-button">
+                        <img src="{{ url_for('static', path='images/search.svg') }}" alt="검색">
+                    </button>
+                </div>
+            </div>
+            <nav class="nav-links">
+                <a href="{{ url_for('read_cart') }}" class="nav-link">
+                    <img src="{{ url_for('static', path='images/cart.svg') }}" alt="장바구니">
+                    장바구니
+                </a>
+                <a href="{{ url_for('view_orders') }}" class="nav-link">
+                    <img src="{{ url_for('static', path='images/order.svg') }}" alt="주문내역">
+                    주문내역
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 

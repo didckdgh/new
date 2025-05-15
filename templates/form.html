@@ -3,37 +3,370 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>사용자 정보 입력</title>
-    
+    <title>주문하기 - TechMart</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+    <style>
+        .header {
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #1e90ff;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .logo img {
+            height: 40px;
+            margin-right: 0.5rem;
+        }
+
+        .search-container {
+            flex: 1;
+            max-width: 600px;
+            margin: 0 2rem;
+            padding: 0.5rem;
+            background-color: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            border: none;
+            background: transparent;
+            font-size: 1rem;
+            width: 100%;
+            line-height: 1.5;
+            height: 38px;
+        }
+
+        .search-input:focus {
+            outline: none;
+        }
+
+        .search-box .button {
+            height: 38px;
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            white-space: nowrap;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .nav-link:hover {
+            background-color: #f0f0f0;
+        }
+
+        .nav-link img {
+            width: 24px;
+            height: 24px;
+            margin-right: 0.5rem;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* 기존 스타일 유지 */
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .cart-item {
+            border-bottom: 1px solid #eee;
+            padding: 1rem 0;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .total-price {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #1e90ff;
+            text-align: right;
+            margin-top: 1rem;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #e0e0e0, transparent);
+            margin: 0;
+            padding: 0;
+            border: none;
+        }
+
+        .button-disabled {
+            opacity: 0.6;
+            cursor: not-allowed !important;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
-    <h1>사용자 정보 입력</h1>
-    <form action="/submit" method="post" enctype="multipart/form-data">
-        <label for="name">이름:</label>
-        <input type="text" name="name" required><br><br>
-        
-        <label for="phone">전화번호:</label>
-        <input type="text" name="phone" required><br><br>
-        
-        <label for="address">주소:</label>
-        <input type="text" name="address" required><br><br>
-        
-        <label for="photo">사진:</label>
-        <input type="file" name="photo" required><br><br>
-        
-        <button type="submit">제출</button>
-    </form>
+    <header class="header">
+        <div class="header-container">
+            <a href="{{ url_for('read_index') }}" class="logo">
+                <img src="{{ url_for('static', path='images/logo.svg') }}" alt="TechMart Logo">
+                TechMart
+            </a>
 
-    
-    {% if message %}
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="search-input" class="search-input" placeholder="찾으시는 상품을 검색해보세요">
+                    <button class="button button-primary" onclick="window.location.href='/'">검색</button>
+                </div>
+            </div>
+
+            <nav class="nav-links">
+                <a href="{{ url_for('read_cart') }}" class="nav-link">
+                    <img src="{{ url_for('static', path='images/cart.svg') }}" alt="장바구니">
+                    장바구니
+                </a>
+                <a href="{{ url_for('view_orders') }}" class="nav-link">
+                    <img src="{{ url_for('static', path='images/order.svg') }}" alt="주문내역">
+                    주문내역
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <hr class="divider">
+
+    <main class="main-content">
+        <div class="navigation">
+            <a href="{{ url_for('read_index') }}">홈</a>
+            <span>></span>
+            <a href="{{ url_for('read_cart') }}">장바구니</a>
+            <span>></span>
+            <span>주문하기</span>
+        </div>
+
+        <form id="user-form" action="/submit" method="post" enctype="multipart/form-data">
+            <div class="card">
+                <h2>주문자 정보</h2>
+                <div class="form-group">
+                    <label for="name">이름</label>
+                    <input type="text" id="name" name="name" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">전화번호</label>
+                    <input type="tel" id="phone" name="phone" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="address">주소</label>
+                    <input type="text" id="address" name="address" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="photo">신분증 사진</label>
+                    <input type="file" id="photo" name="photo" class="form-control" accept="image/*" required>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>주문 상품 정보</h2>
+                <div id="cart-display">
+                    <!-- 장바구니 아이템 목록 -->
+                </div>
+                <div class="cart-summary">
+                    <div id="total-price" class="total-price"></div>
+                </div>
+            </div>
+
+            <!-- 장바구니 JSON 전달용 -->
+            <input type="hidden" name="cart" id="cart-data">
+
+            <div class="button-group">
+                <button type="submit" id="submit-button" class="button button-primary">
+                    <span id="spinner" class="loading-spinner" style="display: none;"></span>
+                    <span id="button-text">주문하기</span>
+                </button>
+            </div>
+        </form>
+
+        {% if message %}
+        <div class="alert alert-success">
+            {{ message }}
+        </div>
+        {% endif %}
+    </main>
+
+    <script src="{{ url_for('static', path='data.js') }}" type="module"></script>
     <script>
-    alert("{{ message }}");
+        // 페이지 로드 시 실행
+        document.addEventListener('DOMContentLoaded', () => {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const display = document.getElementById('cart-display');
+            const totalPrice = document.getElementById('total-price');
+            const form = document.getElementById('user-form');
+            const submitButton = document.getElementById('submit-button');
+            const spinner = document.getElementById('spinner');
+            const buttonText = document.getElementById('button-text');
+            let isSubmitting = false;
+
+            // 장바구니 표시
+            let total = 0;
+            cart.forEach(item => {
+                total += item.totalPrice;
+                const div = document.createElement('div');
+                div.className = 'cart-item';
+                div.innerHTML = `
+                    <div class="cart-item-info">
+                        <h3>${item.name}</h3>
+                        <p>옵션: ${item.option || '없음'}</p>
+                        <p>수량: ${item.quantity}</p>
+                        <p>가격: ${item.totalPrice.toLocaleString()}원</p>
+                    </div>
+                `;
+                display.appendChild(div);
+            });
+
+            totalPrice.innerText = `총 결제 금액: ${total.toLocaleString()}원`;
+
+            // 버튼 상태 변경 함수
+            function setSubmitting(submitting) {
+                isSubmitting = submitting;
+                submitButton.disabled = submitting;
+                submitButton.classList.toggle('button-disabled', submitting);
+                spinner.style.display = submitting ? 'inline-block' : 'none';
+                buttonText.textContent = submitting ? '주문 처리중...' : '주문하기';
+            }
+
+            // 폼 제출 이벤트 처리
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                // 이미 제출 중이면 중단
+                if (isSubmitting) {
+                    return;
+                }
+
+                // 장바구니가 비어있는 경우
+                if (cart.length === 0) {
+                    alert('장바구니가 비어있습니다.');
+                    return;
+                }
+
+                // cart-data hidden input에 장바구니 데이터 설정
+                document.getElementById('cart-data').value = JSON.stringify(cart);
+
+                // 제출 시작
+                setSubmitting(true);
+
+                try {
+                    // FormData 생성 및 장바구니 데이터 추가
+                    const formData = new FormData(form);
+
+                    const response = await fetch('/submit', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        // 주문 성공
+                        localStorage.removeItem('cart');
+                        window.location.href = '/orders';
+                    } else {
+                        // 에러 응답 처리
+                        const errorData = await response.json();
+                        alert(errorData.detail || '주문 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+                        setSubmitting(false);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('주문 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+                    setSubmitting(false);
+                }
+            });
+        });
     </script>
-    {% endif %}
-
-    <br>
-    <a href="/" style="display: inline-block; margin-top: 10px;">← 홈으로 돌아가기</a>
-
-    
 </body>
 </html>

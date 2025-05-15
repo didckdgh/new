@@ -3,77 +3,392 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>쇼핑몰</title>
+    <title>TechMart</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <script>
+        // 전역 변수로 products를 window 객체에 할당
+        window.products = [];
+        let isInitialized = false;
+
+        // DOM 로드 완료 후 실행될 함수
+        function onDOMLoaded() {
+            // DOM 요소
+            const categoryList = document.getElementById('category-list');
+            const searchInput = document.getElementById('search-input');
+            
+            // 카테고리 클릭 이벤트 처리
+            categoryList.addEventListener('click', (e) => {
+                const categoryItem = e.target.closest('.category-item');
+                if (!categoryItem) return;
+
+                // 활성 카테고리 업데이트
+                document.querySelector('.category-item.active').classList.remove('active');
+                categoryItem.classList.add('active');
+                
+                // 선택된 카테고리로 상품 필터링
+                const currentCategory = categoryItem.dataset.category;
+                const filteredProducts = filterByCategory(window.products, currentCategory);
+                displayProducts(filteredProducts);
+            });
+
+            // 엔터 키로 검색
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleSearch();
+                }
+            });
+
+            // 초기화가 완료되었다면 상품 표시
+            if (isInitialized) {
+                displayProducts(window.products);
+            }
+        }
+
+        // 상품 초기화 함수
+        function initializeProducts(loadedProducts) {
+            window.products = loadedProducts;
+            isInitialized = true;
+            
+            // DOM이 이미 로드되었다면 상품 표시
+            if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                displayProducts(window.products);
+            }
+        }
+
+        // DOMContentLoaded 이벤트 리스너
+        document.addEventListener('DOMContentLoaded', onDOMLoaded);
+    </script>
+    <script src="{{ url_for('static', path='data.js') }}" defer></script>
+    <script>
+        function displayProducts(productsToShow) {
+            if (!productsToShow) return;
+            
+            const productsGrid = document.getElementById('products-grid');
+            const noResults = document.getElementById('no-results');
+            
+            productsGrid.innerHTML = '';
+            noResults.style.display = productsToShow.length === 0 ? 'block' : 'none';
+            
+            productsToShow.forEach(product => {
+                const card = document.createElement('a');
+                card.href = `/detail?name=${encodeURIComponent(product.name)}`;
+                card.className = 'product-card';
+                
+                const currentPrice = product.options[0].price;
+                
+                card.innerHTML = `
+                    <img src="${product.imageUrl}" alt="${product.name}" class="product-image">
+                    <div class="product-info">
+                        <h3 class="product-name">${product.name}</h3>
+                        <div class="price-info">
+                            <div class="product-price">${currentPrice.toLocaleString()}원</div>
+                        </div>
+                        <p class="product-description">${product.description}</p>
+                    </div>
+                `;
+                
+                productsGrid.appendChild(card);
+            });
+        }
+
+        // 카테고리 필터링 함수
+        function filterByCategory(products, category) {
+            if (category === 'all') return products;
+            return products.filter(product => product.category === category);
+        }
+
+        // 검색 기능
+        window.handleSearch = function() {
+            const searchInput = document.getElementById('search-input');
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const filteredProducts = window.products.filter(product => 
+                product.name.toLowerCase().includes(searchTerm) ||
+                product.description.toLowerCase().includes(searchTerm)
+            );
+            displayProducts(filteredProducts);
+        };
+    </script>
+    <style>
+        .header {
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #1e90ff;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .logo img {
+            height: 40px;
+            margin-right: 0.5rem;
+        }
+
+        .search-container {
+            flex: 1;
+            max-width: 600px;
+            margin: 0 2rem;
+            padding: 0.5rem;
+            background-color: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            border: none;
+            background: transparent;
+            font-size: 1rem;
+            width: 100%;
+            line-height: 1.5;
+            height: 38px;
+        }
+
+        .search-box .button {
+            height: 38px;
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            white-space: nowrap;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .search-input:focus {
+            outline: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .nav-link:hover {
+            background-color: #f0f0f0;
+        }
+
+        .nav-link img {
+            width: 24px;
+            height: 24px;
+            margin-right: 0.5rem;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .category-section {
+            max-width: 1200px;
+            margin: 1rem auto;
+            padding: 0 1rem;
+        }
+
+        .category-list {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        .category-list::-webkit-scrollbar {
+            display: none;  /* Chrome, Safari, Edge */
+        }
+
+        .category-item {
+            padding: 0.75rem 1.5rem;
+            background-color: #f8f9fa;
+            border-radius: 20px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .category-item:hover {
+            background-color: #e9ecef;
+        }
+
+        .category-item.active {
+            background-color: #1e90ff;
+            color: white;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 2rem 0;
+            display: none;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #e0e0e0, transparent);
+            margin: 0;
+            padding: 0;
+            border: none;
+        }
+
+        .footer {
+            background-color: #f8f9fa;
+            padding: 2rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .footer-info {
+            flex: 1;
+        }
+
+        .footer-info h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer-info p {
+            margin-bottom: 1rem;
+        }
+
+        .footer-contact {
+            flex: 1;
+        }
+
+        .footer-contact h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .contact-info p {
+            margin-bottom: 0.5rem;
+        }
+
+        .contact-info a {
+            color: #333;
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <h1>쇼핑몰</h1>
-        </div>
-        <div class="cart-btn">
-            <a href="/cart">장바구니</a>
-        </div>
-        <div class="search-container">
-            <input type="text" id="search" placeholder="상품 검색" onkeyup="searchProducts()">
+    <header class="header">
+        <div class="header-container">
+            <a href="/" class="logo">
+                <img src="/static/images/logo.svg" alt="TechMart Logo">
+                TechMart
+            </a>
+
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="search-input" class="search-input" placeholder="찾으시는 상품을 검색해보세요">
+                    <button class="button button-primary" onclick="handleSearch()">검색</button>
+                </div>
+            </div>
+
+            <nav class="nav-links">
+                <a href="/cart" class="nav-link">
+                    <img src="/static/images/cart.svg" alt="장바구니">
+                    장바구니
+                </a>
+                <a href="/orders" class="nav-link">
+                    <img src="/static/images/order.svg" alt="주문내역">
+                    주문내역
+                </a>
+            </nav>
         </div>
     </header>
 
-    <main>
-        <section class="category-nav">
-            <button onclick="filterCategory('all')">전체</button>
-            <button onclick="filterCategory('category1')">카테고리 1</button>
-            <button onclick="filterCategory('category2')">카테고리 2</button>
-            <button onclick="filterCategory('category3')">카테고리 3</button>
-        </section>
+    <hr class="divider">
 
-        <section class="product-list" id="product-list">
-            <!-- 상품 목록이 동적으로 추가될 곳 -->
-        </section>
+    <div class="category-section">
+        <ul class="category-list" id="category-list">
+            <li class="category-item active" data-category="all">전체</li>
+            <li class="category-item" data-category="laptop">노트북</li>
+            <li class="category-item" data-category="desktop">데스크탑</li>
+            <li class="category-item" data-category="monitor">모니터</li>
+            <li class="category-item" data-category="keyboard">키보드</li>
+            <li class="category-item" data-category="mouse">마우스</li>
+            <li class="category-item" data-category="headset">헤드셋</li>
+            <li class="category-item" data-category="accessories">주변기기</li>
+        </ul>
+    </div>
+
+    <main class="main-content">
+        <div id="no-results" class="no-results">
+            <h3>검색 결과가 없습니다</h3>
+            <p>다른 검색어로 다시 시도해보세요.</p>
+        </div>
+
+        <div class="grid" id="products-grid">
+            <!-- 상품 목록이 여기에 동적으로 추가됩니다 -->
+        </div>
     </main>
 
-    {% if message %}
-    <script>
-        alert("{{ message }}");
-    </script>
-    {% endif %}
-
-    <footer>
-        <p>© 2025 모던 쇼핑몰</p>
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-info">
+                <h3>TechMart 소개</h3>
+                <p>최고의 IT 제품을 합리적인 가격으로 만나보세요.</p>
+                <p>고객 만족을 최우선으로 생각하는 TechMart입니다.</p>
+            </div>
+            <div class="footer-contact">
+                <h3>고객 문의</h3>
+                <div class="contact-info">
+                    <p>이메일: <a href="mailto:support@techmart.com">support@techmart.com</a></p>
+                    <p>전화: <a href="tel:1544-0000">1544-0000</a></p>
+                    <p>운영시간: 평일 09:00 - 18:00</p>
+                </div>
+            </div>
+        </div>
     </footer>
-
-    <!-- ✅ 성공 메시지 alert -->
-    <script>
-    const cookies = document.cookie.split(";").map(c => c.trim());
-    const messageCookie = cookies.find(c => c.startsWith("message="));
-    if (messageCookie) {
-      const message = decodeURIComponent(messageCookie.split("=")[1]);
-      alert(message);
-      document.cookie = "message=; Max-Age=0; path=/";
-    }
-    </script>
-
-    <!-- 옵션 선택 모달 -->
-    <div id="option-modal" class="modal">
-    <div class="modal-content">
-      <span class="close-btn" onclick="closeOptionModal()">×</span>
-      <h2>옵션 선택</h2>
-  
-      <!-- 🔥 이미지 추가 (여기!!) -->
-      <img id="option-modal-image" src="" alt="상품 이미지" style="width: 200px; height: auto; margin-bottom: 10px;">
-  
-      <label for="quantity">수량:</label>
-      <input type="number" id="quantity" value="1" min="1" onchange="updateOptionPrice()">
-      <label for="option">옵션 선택:</label>
-      <select id="option" onchange="updateOptionPrice()"></select>
-      <p>가격: <span id="price"></span>원</p>
-      <button onclick="addToCartWithOptions()">장바구니에 담기</button>
-    </div>
-  </div>
-  
-
-   <!-- 이걸로 수정 -->
-    <script type="module" src="/static/script.js"></script>
-
 </body>
 </html>

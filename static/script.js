@@ -2,28 +2,6 @@ import { products } from './data.js';
 
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
-document.addEventListener("DOMContentLoaded", function () {
-    renderProducts(products);
-  });
-  
-  function renderProducts(productList) {
-    const productContainer = document.getElementById("product-list");
-    productContainer.innerHTML = "";
-  
-    productList.forEach(product => {
-      const productEl = document.createElement("div");
-      productEl.className = "product-item";
-      productEl.innerHTML = `
-        <img src="${product.images[0]}" alt="${product.name}">
-        <h3>${product.name}</h3>
-        <p>${product.description}</p>
-        <p>${product.price}원</p>
-        <button onclick="openOptionModal('${product.id}')">옵션 선택</button>
-      `;
-      productContainer.appendChild(productEl);
-    });
-  }
-  
 function filterCategory(category) {
     const filtered = category === 'all' ? products : products.filter(p => p.category === category);
     displayProducts(filtered);
