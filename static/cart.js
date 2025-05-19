@@ -28,13 +28,15 @@ function renderCartItems() {
         const cartItem = document.createElement('div');
         cartItem.className = 'cart-item';
         cartItem.innerHTML = `
-            <img src="${product.imageUrl}" alt="${item.name}" class="cart-item-image">
-            <div class="cart-item-info">
-                <h3>${item.name}</h3>
-                <p>옵션: ${item.option}</p>
-                <p>수량: ${item.quantity}</p>
-                <p>가격: ${item.totalPrice.toLocaleString()}원</p>
-            </div>
+            <a href="/detail?name=${encodeURIComponent(item.name)}" class="cart-item-link">
+                <img src="${product.imageUrl}" alt="${item.name}" class="cart-item-image">
+                <div class="cart-item-info">
+                    <h3>${item.name}</h3>
+                    <p>옵션: ${item.option}</p>
+                    <p>수량: ${item.quantity}</p>
+                    <p>가격: ${item.totalPrice.toLocaleString()}원</p>
+                </div>
+            </a>
             <div class="cart-item-actions">
                 <button onclick="window.editCartItem(${index})" class="edit-btn">수정</button>
                 <button onclick="window.deleteCartItem(${index})" class="delete-btn">삭제</button>
@@ -44,6 +46,15 @@ function renderCartItems() {
     });
 
     document.getElementById('total-price').innerText = `총 금액: ${totalPrice.toLocaleString()}원`;
+
+    // Add CSS for hover effect
+    if (!document.getElementById('cart-item-link-style')) {
+        const style = document.createElement('style');
+        style.id = 'cart-item-link-style';
+        style.innerHTML = `.cart-item-link { display: flex; align-items: center; text-decoration: none; color: inherit; border-radius: 8px; transition: background 0.2s; }
+.cart-item-link:hover, .cart-item-link:active { background: #f0f0f0; }`;
+        document.head.appendChild(style);
+    }
 }
 
 // 장바구니 아이템 수정

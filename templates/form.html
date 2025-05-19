@@ -183,6 +183,18 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .cart-item-link {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .cart-item-link:hover, .cart-item-link:active {
+            background: #f0f0f0;
+        }
     </style>
 </head>
 <body>
@@ -296,12 +308,14 @@
                 const div = document.createElement('div');
                 div.className = 'cart-item';
                 div.innerHTML = `
-                    <div class="cart-item-info">
-                        <h3>${item.name}</h3>
-                        <p>옵션: ${item.option || '없음'}</p>
-                        <p>수량: ${item.quantity}</p>
-                        <p>가격: ${item.totalPrice.toLocaleString()}원</p>
-                    </div>
+                    <a href="/detail?name=${encodeURIComponent(item.name)}" class="cart-item-link">
+                        <div class="cart-item-info">
+                            <h3>${item.name}</h3>
+                            <p>옵션: ${item.option || '없음'}</p>
+                            <p>수량: ${item.quantity}</p>
+                            <p>가격: ${item.totalPrice.toLocaleString()}원</p>
+                        </div>
+                    </a>
                 `;
                 display.appendChild(div);
             });
@@ -366,6 +380,15 @@
                     setSubmitting(false);
                 }
             });
+
+            // Add CSS for hover effect
+            if (!document.getElementById('cart-item-link-style')) {
+                const style = document.createElement('style');
+                style.id = 'cart-item-link-style';
+                style.innerHTML = `.cart-item-link { display: block; text-decoration: none; color: inherit; border-radius: 8px; transition: background 0.2s; }
+.cart-item-link:hover, .cart-item-link:active { background: #f0f0f0; }`;
+                document.head.appendChild(style);
+            }
         });
     </script>
 </body>
