@@ -9,9 +9,9 @@
     <span>주문 내역</span>
 </div>
 
-<div class="order-grid">
+<div class="order-grid grid">
 {% for order in orders %}
-    <div class="order-card">
+    <div class="order-card product-card">
         <div class="status-badge status-{{ order.status }}">
             {{ order.status }}
         </div>
@@ -90,4 +90,8 @@ document.getElementById('orderSearchInput').addEventListener('input', function(e
     }
 });
 </script>
+{% endblock %}
+
+{% block extra_css %}
+<meta name="viewport" content="width=1200">
 {% endblock %} 

@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=1200">
     <title>주문하기 - TechMart</title>
     <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
     <style>
@@ -194,6 +194,26 @@
 
         .cart-item-link:hover, .cart-item-link:active {
             background: #f0f0f0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            padding: 0.5rem;
+        }
+        .product-card {
+            width: 100%;
+            margin: 0;
+            border-radius: 12px;
+            box-sizing: border-box;
+        }
+        .product-card img {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            aspect-ratio: 1 / 1;
+            background: #fff;
         }
     </style>
 </head>
