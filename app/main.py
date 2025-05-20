@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Form, UploadFile, File, Request, HTTPException
+from fastapi import FastAPI, Form, UploadFile, File, Request, HTTPException, Cookie
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -116,18 +116,18 @@ async def submit_user(
     phone: str = Form(...),
     address: str = Form(...),
     cart: str = Form(...),
-    photo: UploadFile = File(...)
+    payment_image: UploadFile = File(...)
 ):
     print(f"[주문 제출] 이름: {name}, 전화번호: {phone}")  # 로깅 추가
 
-    if not photo.filename:
+    if not payment_image.filename:
         raise HTTPException(status_code=400, detail="사진이 업로드되지 않았습니다.")
 
     try:
         # 파일 저장
-        file_path = os.path.join(UPLOADS_DIR, photo.filename)
+        file_path = os.path.join(UPLOADS_DIR, payment_image.filename)
         with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(photo.file, buffer)
+            shutil.copyfileobj(payment_image.file, buffer)
         print(f"[파일 저장] 경로: {file_path}")  # 로깅 추가
     except Exception as e:
         print(f"[파일 저장 실패] {str(e)}")  # 로깅 추가
@@ -158,7 +158,7 @@ async def submit_user(
         "name": name,
         "phone": phone,
         "address": address,
-        "photo_path": f"uploads/{photo.filename}",
+        "photo_path": f"uploads/{payment_image.filename}",
         "submitted_at": now.strftime("%Y-%m-%d %H:%M:%S"),
         "cart_items": cart_items,
         "total_amount": total_amount,
@@ -189,16 +189,27 @@ async def get_admin_orders():
     print(f"[관리자 주문 조회] 승인 전: {len(orders_data['pending'])}, 배송 중: {len(orders_data['in_delivery'])}, 완료: {len(orders_data['completed'])}")  # 로깅 추가
     return JSONResponse(content=orders_data)
 
-# ✅ 관리자 페이지
+ADMIN_PASSWORD = "admin123"  # 실제 운영시 환경변수로!
+
+@app.post("/admin-auth")
+async def verify_admin_password(password: str = Form(...)):
+    if password == ADMIN_PASSWORD:
+        response = JSONResponse({"success": True})
+        response.set_cookie(key="admin_auth_cookie", value="1", httponly=True, max_age=60*60)
+        return response
+    return JSONResponse({"success": False, "error": "비밀번호가 올바르지 않습니다."}, status_code=401)
+
 @app.get("/admin", response_class=HTMLResponse)
-async def admin_page(request: Request):
+async def admin_page(request: Request, admin_auth_cookie: str = Cookie(None)):
+    is_locked = admin_auth_cookie != "1"
     return templates.TemplateResponse("admin.html", {
         "request": request,
         "pending_orders": pending_orders,
         "in_delivery_orders": in_delivery_orders,
         "completed_orders": completed_orders,
         "trash_data": trash_data,
-        "cancelled_orders": cancelled_orders
+        "cancelled_orders": cancelled_orders,
+        "admin_locked": is_locked
     })
 
 # ✅ 주문 승인 (승인 전 -> 배송 중)
@@ -299,8 +310,6 @@ async def read_form_html(request: Request):
 async def view_orders(request: Request):
     # 모든 주문 내역을 가져옵니다
     all_orders = []
-    
-    # 한 번의 반복으로 모든 주문을 처리
     for order_list, status in [
         (pending_orders, "상품준비중"),
         (in_delivery_orders, "배송중"),
@@ -310,14 +319,17 @@ async def view_orders(request: Request):
             order_copy = dict(order)
             order_copy["status"] = status
             all_orders.append(order_copy)
-    
-    # 정렬 최적화 (최신 주문이 위로 오도록)
     all_orders.sort(key=lambda x: x["submitted_at"], reverse=True)
-    
-    return templates.TemplateResponse("orders.html", {
+    message = request.cookies.get("message")
+    if message:
+        message = unquote(message)
+    response = templates.TemplateResponse("orders.html", {
         "request": request,
-        "orders": all_orders
+        "orders": all_orders,
+        "message": message
     })
+    response.delete_cookie("message")
+    return response
 
 # ✅ 사용자 주문 삭제
 @app.post("/delete_user_order/{category}/{order_index}")

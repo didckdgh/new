@@ -3,6 +3,8 @@ let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
 // 장바구니 아이템 렌더링
 function renderCartItems() {
+    // 항상 최신 cart를 localStorage에서 읽음
+    cart = JSON.parse(localStorage.getItem('cart')) || [];
     const cartItemsContainer = document.getElementById('cart-items');
     
     if (cart.length === 0) {
@@ -121,7 +123,6 @@ window.editCartItem = function(index) {
 // 장바구니 아이템 삭제
 window.deleteCartItem = function(index) {
     if (!confirm('이 상품을 장바구니에서 삭제하시겠습니까?')) return;
-    
     cart.splice(index, 1);
     localStorage.setItem('cart', JSON.stringify(cart));
     renderCartItems();
@@ -130,10 +131,11 @@ window.deleteCartItem = function(index) {
 // 장바구니 비우기
 window.clearCart = function() {
     if (!confirm('장바구니를 비우시겠습니까?')) return;
-    
     localStorage.removeItem('cart');
+    cart = [];
     renderCartItems();
 };
 
-// 초기 렌더링
-document.addEventListener('DOMContentLoaded', renderCartItems);
+// 초기 렌더링 및 페이지 복귀 시 렌더링
+window.addEventListener('DOMContentLoaded', renderCartItems);
+window.addEventListener('pageshow', renderCartItems);

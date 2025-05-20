@@ -9,6 +9,12 @@
     <span>주문 내역</span>
 </div>
 
+{% if message %}
+<div class="alert alert-success">
+    {{ message }}
+</div>
+{% endif %}
+
 <div class="order-grid grid">
 {% for order in orders %}
     <div class="order-card product-card">
@@ -59,24 +65,20 @@
 
 {% block extra_js %}
 <script>
-document.getElementById('orderSearchInput').addEventListener('input', function(e) {
-    const searchTerm = e.target.value.toLowerCase();
+window.handleOrderSearch = function() {
+    const searchInput = document.getElementById('orderSearchInput');
+    const searchTerm = searchInput.value.toLowerCase().trim();
     const orderCards = document.querySelectorAll('.order-card');
-    
     orderCards.forEach(card => {
         const orderName = card.querySelector('h3').textContent.toLowerCase();
         const productNames = Array.from(card.querySelectorAll('.cart-item p')).map(p => p.textContent.toLowerCase());
-        
         const matchesSearch = orderName.includes(searchTerm) || 
-                            productNames.some(name => name.includes(searchTerm));
-        
+                              productNames.some(name => name.includes(searchTerm));
         card.style.display = matchesSearch ? 'block' : 'none';
     });
-
     // 검색 결과가 없을 때 메시지 표시
     const noResults = Array.from(orderCards).every(card => card.style.display === 'none');
     let noResultsMsg = document.querySelector('.no-results');
-    
     if (noResults && searchTerm) {
         if (!noResultsMsg) {
             noResultsMsg = document.createElement('div');
@@ -88,10 +90,62 @@ document.getElementById('orderSearchInput').addEventListener('input', function(e
     } else if (noResultsMsg) {
         noResultsMsg.style.display = 'none';
     }
-});
+};
+// 엔터키로도 검색 가능하게
+const searchInput = document.getElementById('orderSearchInput');
+if (searchInput) {
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            window.handleOrderSearch();
+        }
+    });
+}
+// 장바구니 비우기: 주문 성공 메시지가 있으면 localStorage cart 삭제
+if (document.querySelector('.alert-success')) {
+    localStorage.removeItem('cart');
+}
 </script>
 {% endblock %}
 
 {% block extra_css %}
 <meta name="viewport" content="width=1200">
+<style>
+.search-container {
+    flex: 1;
+    max-width: 800px;
+    margin: 0.1rem;
+    padding: 0.1rem;
+    background-color: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+}
+.search-box {
+    display: flex;
+    gap: 0.3rem;
+    align-items: center;
+}
+.search-input {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    width: 100%;
+    line-height: 1.4;
+    height: 38px;
+}
+.search-box .button {
+    height: 38px;
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    white-space: nowrap;
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+.search-input:focus {
+    outline: none;
+}
+</style>
 {% endblock %} 

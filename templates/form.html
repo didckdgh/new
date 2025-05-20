@@ -39,9 +39,9 @@
 
         .search-container {
             flex: 1;
-            max-width: 600px;
-            margin: 0 2rem;
-            padding: 0.5rem;
+            max-width: 800px;
+            margin: 0.1rem;
+            padding: 0.1rem;
             background-color: #f8f9fa;
             border: 1px solid #e0e0e0;
             border-radius: 4px;
@@ -49,7 +49,7 @@
 
         .search-box {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.3rem;
             align-items: center;
         }
 
@@ -60,12 +60,8 @@
             background: transparent;
             font-size: 1rem;
             width: 100%;
-            line-height: 1.5;
+            line-height: 1.4;
             height: 38px;
-        }
-
-        .search-input:focus {
-            outline: none;
         }
 
         .search-box .button {
@@ -76,6 +72,11 @@
             white-space: nowrap;
             font-size: 1rem;
             line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .search-input:focus {
+            outline: none;
         }
 
         .nav-links {
@@ -215,6 +216,42 @@
             aspect-ratio: 1 / 1;
             background: #fff;
         }
+
+        .account-info {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .account-info p {
+            margin: 0.5rem 0;
+            font-size: 1.1rem;
+        }
+
+        .account-info strong {
+            display: inline-block;
+            width: 100px;
+            color: #333;
+        }
+
+        .form-text {
+            display: block;
+            margin-top: 0.5rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        input[type="file"] {
+            padding: 0.5rem;
+            border: 1px dashed #ddd;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+
+        input[type="file"]:hover {
+            border-color: #1e90ff;
+        }
     </style>
 </head>
 <body>
@@ -251,14 +288,27 @@
         <div class="navigation">
             <a href="{{ url_for('read_index') }}">홈</a>
             <span>></span>
-            <a href="{{ url_for('read_cart') }}">장바구니</a>
-            <span>></span>
             <span>주문하기</span>
         </div>
 
-        <form id="user-form" action="/submit" method="post" enctype="multipart/form-data">
-            <div class="card">
-                <h2>주문자 정보</h2>
+        <div class="card">
+            <h2>입금 계좌 정보</h2>
+            <div class="account-info">
+                <p><strong>은행:</strong> 신한은행</p>
+                <p><strong>계좌번호:</strong> 1234-2343-2424-XX</p>
+                <p><strong>예금주:</strong> 홍길동</p>
+            </div>
+            <div class="form-group">
+                <label for="payment-image">입금 확인 이미지</label>
+                <input type="file" id="payment-image" name="payment_image" accept="image/*" class="form-control" required>
+                <small class="form-text">입금 완료 후 캡쳐한 이미지를 업로드해주세요.</small>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>주문 정보</h2>
+            <div id="cart-display"></div>
+            <form id="user-form" action="/submit" method="post" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="name">이름</label>
                     <input type="text" id="name" name="name" class="form-control" required>
@@ -273,39 +323,27 @@
                     <label for="address">주소</label>
                     <input type="text" id="address" name="address" class="form-control" required>
                 </div>
-                
-                <div class="form-group">
-                    <label for="photo">신분증 사진</label>
-                    <input type="file" id="photo" name="photo" class="form-control" accept="image/*" required>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>주문 상품 정보</h2>
-                <div id="cart-display">
-                    <!-- 장바구니 아이템 목록 -->
-                </div>
                 <div class="cart-summary">
                     <div id="total-price" class="total-price"></div>
                 </div>
+
+                <!-- 장바구니 JSON 전달용 -->
+                <input type="hidden" name="cart" id="cart-data">
+
+                <div class="button-group">
+                    <button type="submit" id="submit-button" class="button button-primary">
+                        <span id="spinner" class="loading-spinner" style="display: none;"></span>
+                        <span id="button-text">주문하기</span>
+                    </button>
+                </div>
+            </form>
+
+            {% if message %}
+            <div class="alert alert-success">
+                {{ message }}
             </div>
-
-            <!-- 장바구니 JSON 전달용 -->
-            <input type="hidden" name="cart" id="cart-data">
-
-            <div class="button-group">
-                <button type="submit" id="submit-button" class="button button-primary">
-                    <span id="spinner" class="loading-spinner" style="display: none;"></span>
-                    <span id="button-text">주문하기</span>
-                </button>
-            </div>
-        </form>
-
-        {% if message %}
-        <div class="alert alert-success">
-            {{ message }}
+            {% endif %}
         </div>
-        {% endif %}
     </main>
 
     <script src="{{ url_for('static', path='data.js') }}" type="module"></script>
@@ -323,22 +361,24 @@
 
             // 장바구니 표시
             let total = 0;
-            cart.forEach(item => {
-                total += item.totalPrice;
-                const div = document.createElement('div');
-                div.className = 'cart-item';
-                div.innerHTML = `
-                    <a href="/detail?name=${encodeURIComponent(item.name)}" class="cart-item-link">
-                        <div class="cart-item-info">
-                            <h3>${item.name}</h3>
-                            <p>옵션: ${item.option || '없음'}</p>
-                            <p>수량: ${item.quantity}</p>
-                            <p>가격: ${item.totalPrice.toLocaleString()}원</p>
-                        </div>
-                    </a>
-                `;
-                display.appendChild(div);
-            });
+            if (display) {
+                cart.forEach(item => {
+                    total += item.totalPrice;
+                    const div = document.createElement('div');
+                    div.className = 'cart-item';
+                    div.innerHTML = `
+                        <a href="/detail?name=${encodeURIComponent(item.name)}" class="cart-item-link">
+                            <div class="cart-item-info">
+                                <h3>${item.name}</h3>
+                                <p>옵션: ${item.option || '없음'}</p>
+                                <p>수량: ${item.quantity}</p>
+                                <p>가격: ${item.totalPrice.toLocaleString()}원</p>
+                            </div>
+                        </a>
+                    `;
+                    display.appendChild(div);
+                });
+            }
 
             totalPrice.innerText = `총 결제 금액: ${total.toLocaleString()}원`;
 
@@ -351,54 +391,34 @@
                 buttonText.textContent = submitting ? '주문 처리중...' : '주문하기';
             }
 
-            // 폼 제출 이벤트 처리
-            form.addEventListener('submit', async (e) => {
+            // 폼 제출 이벤트 처리 (fetch로 전송, payment_image도 포함)
+            form.addEventListener('submit', function(e) {
                 e.preventDefault();
-
-                // 이미 제출 중이면 중단
-                if (isSubmitting) {
-                    return;
-                }
-
-                // 장바구니가 비어있는 경우
-                if (cart.length === 0) {
-                    alert('장바구니가 비어있습니다.');
-                    return;
-                }
-
-                // cart-data hidden input에 장바구니 데이터 설정
-                document.getElementById('cart-data').value = JSON.stringify(cart);
-
-                // 제출 시작
                 setSubmitting(true);
-
-                try {
-                    // FormData 생성 및 장바구니 데이터 추가
-                    const formData = new FormData(form);
-
-                    const response = await fetch('/submit', {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'Accept': 'application/json'
-                        }
-                    });
-
-                    if (response.ok) {
-                        // 주문 성공
-                        localStorage.removeItem('cart');
-                        window.location.href = '/orders';
-                    } else {
-                        // 에러 응답 처리
-                        const errorData = await response.json();
-                        alert(errorData.detail || '주문 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
-                        setSubmitting(false);
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('주문 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
-                    setSubmitting(false);
+                const formData = new FormData();
+                formData.append('name', form.name.value);
+                formData.append('phone', form.phone.value);
+                formData.append('address', form.address.value);
+                formData.append('cart', JSON.stringify(cart));
+                // payment_image는 form 밖에 있으므로 직접 추가
+                const paymentInput = document.getElementById('payment-image');
+                if (paymentInput && paymentInput.files.length > 0) {
+                    formData.append('payment_image', paymentInput.files[0]);
                 }
+                fetch('/submit', {
+                    method: 'POST',
+                    body: formData
+                }).then(res => {
+                    if (res.redirected) {
+                        localStorage.removeItem('cart');
+                        window.location.href = res.url;
+                    } else {
+                        return res.text().then(t => { throw new Error(t); });
+                    }
+                }).catch(err => {
+                    setSubmitting(false);
+                    alert('주문 처리 중 오류가 발생했습니다.\n' + err.message);
+                });
             });
 
             // Add CSS for hover effect
@@ -409,6 +429,20 @@
 .cart-item-link:hover, .cart-item-link:active { background: #f0f0f0; }`;
                 document.head.appendChild(style);
             }
+
+            // 구매 버튼 임팩트 효과 복원
+            submitButton.addEventListener('mousedown', function() {
+                submitButton.style.transform = 'scale(0.96)';
+                submitButton.style.boxShadow = '0 2px 8px rgba(30,144,255,0.2)';
+            });
+            submitButton.addEventListener('mouseup', function() {
+                submitButton.style.transform = '';
+                submitButton.style.boxShadow = '';
+            });
+            submitButton.addEventListener('mouseleave', function() {
+                submitButton.style.transform = '';
+                submitButton.style.boxShadow = '';
+            });
         });
     </script>
 </body>

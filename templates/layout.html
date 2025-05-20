@@ -16,10 +16,8 @@
             </a>
             <div class="search-container">
                 <div class="search-box">
-                    <input type="text" class="search-input" placeholder="검색어를 입력하세요">
-                    <button type="button" class="search-button">
-                        <img src="{{ url_for('static', path='images/search.svg') }}" alt="검색">
-                    </button>
+                    <input type="text" id="search-input" class="search-input" placeholder="찾으시는 상품을 검색해보세요">
+                    <button class="button button-primary" onclick="window.handleOrderSearch()">검색</button>
                 </div>
             </div>
             <nav class="nav-links">
