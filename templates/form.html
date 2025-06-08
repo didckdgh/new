@@ -329,6 +329,7 @@
 
                 <!-- 장바구니 JSON 전달용 -->
                 <input type="hidden" name="cart" id="cart-data">
+                <input type="hidden" name="device_id" id="device-id">
 
                 <div class="button-group">
                     <button type="submit" id="submit-button" class="button button-primary">
@@ -351,6 +352,7 @@
         // 페이지 로드 시 실행
         document.addEventListener('DOMContentLoaded', () => {
             const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const deviceId = localStorage.getItem('device_id');
             const display = document.getElementById('cart-display');
             const totalPrice = document.getElementById('total-price');
             const form = document.getElementById('user-form');
@@ -359,39 +361,35 @@
             const buttonText = document.getElementById('button-text');
             let isSubmitting = false;
 
-            // 장바구니 표시
-            let total = 0;
-            if (display) {
-                cart.forEach(item => {
-                    total += item.totalPrice;
-                    const div = document.createElement('div');
-                    div.className = 'cart-item';
-                    div.innerHTML = `
-                        <a href="/detail?name=${encodeURIComponent(item.name)}" class="cart-item-link">
-                            <div class="cart-item-info">
-                                <h3>${item.name}</h3>
-                                <p>옵션: ${item.option || '없음'}</p>
-                                <p>수량: ${item.quantity}</p>
-                                <p>가격: ${item.totalPrice.toLocaleString()}원</p>
-                            </div>
-                        </a>
-                    `;
-                    display.appendChild(div);
-                });
+            // device_id 설정
+            document.getElementById('device-id').value = deviceId;
+
+            // 장바구니 데이터 표시
+            if (cart.length > 0) {
+                const cartItems = cart.map(item => `
+                    <div class="cart-item">
+                        <h3>${item.name}</h3>
+                        <p>옵션: ${item.option}</p>
+                        <p>수량: ${item.quantity}</p>
+                        <p>가격: ${item.totalPrice.toLocaleString()}원</p>
+                    </div>
+                `).join('');
+                display.innerHTML = cartItems;
+                totalPrice.textContent = `총 금액: ${cart.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString()}원`;
+            } else {
+                display.innerHTML = '<p>장바구니가 비어있습니다.</p>';
+                totalPrice.textContent = '총 금액: 0원';
             }
 
-            totalPrice.innerText = `총 결제 금액: ${total.toLocaleString()}원`;
-
-            // 버튼 상태 변경 함수
+            // 제출 상태 설정 함수
             function setSubmitting(submitting) {
                 isSubmitting = submitting;
                 submitButton.disabled = submitting;
-                submitButton.classList.toggle('button-disabled', submitting);
                 spinner.style.display = submitting ? 'inline-block' : 'none';
-                buttonText.textContent = submitting ? '주문 처리중...' : '주문하기';
+                buttonText.textContent = submitting ? '처리중...' : '주문하기';
             }
 
-            // 폼 제출 이벤트 처리 (fetch로 전송, payment_image도 포함)
+            // 폼 제출 이벤트 처리
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
                 setSubmitting(true);
@@ -400,11 +398,14 @@
                 formData.append('phone', form.phone.value);
                 formData.append('address', form.address.value);
                 formData.append('cart', JSON.stringify(cart));
+                formData.append('device_id', deviceId);
+                
                 // payment_image는 form 밖에 있으므로 직접 추가
                 const paymentInput = document.getElementById('payment-image');
                 if (paymentInput && paymentInput.files.length > 0) {
                     formData.append('payment_image', paymentInput.files[0]);
                 }
+
                 fetch('/submit', {
                     method: 'POST',
                     body: formData

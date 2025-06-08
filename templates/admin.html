@@ -108,6 +108,24 @@
             margin-top: 0.5rem;
             font-size: 0.95rem;
         }
+        .filter-container {
+            margin: 1rem 0;
+        }
+        .filter-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .filter-group input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .filter-group button {
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
@@ -157,11 +175,11 @@
 
         <main class="container">
             <div class="tab-buttons">
-                <button class="tab-button active" onclick="showSection('pending')">승인 전</button>
-                <button class="tab-button" onclick="showSection('in-delivery')">배송 중</button>
-                <button class="tab-button" onclick="showSection('completed')">배송 완료</button>
-                <button class="tab-button" onclick="showSection('cancelled')">주문 취소</button>
-                <button class="tab-button" onclick="showSection('trash')">휴지통</button>
+                <button class="tab-button active" onclick="showTab('pending')">승인 전 주문</button>
+                <button class="tab-button" onclick="showTab('in_delivery')">배송 중 주문</button>
+                <button class="tab-button" onclick="showTab('completed')">배송 완료 주문</button>
+                <button class="tab-button" onclick="showTab('cancelled')">취소된 주문</button>
+                <button class="tab-button" onclick="showTab('trash')">휴지통</button>
             </div>
 
             <!-- 승인 전 주문 -->
@@ -174,6 +192,7 @@
                         <p>전화번호: {{ order.phone }}</p>
                         <p>주소: {{ order.address }}</p>
                         <p>주문 시간: {{ order.submitted_at }}</p>
+                        <p>기기 ID: {{ order.device_id }}</p>
                         <img src="{{ url_for('static', path=order.photo_path) }}" alt="신분증" style="max-width: 200px;">
                         <h4>주문 상품:</h4>
                         {% for item in order.cart_items %}
@@ -201,16 +220,17 @@
             </section>
 
             <!-- 배송 중 주문 -->
-            <section id="in-delivery" class="order-section" style="display: none;">
+            <section id="in_delivery" class="order-section" style="display: none;">
                 <h2>배송 중 주문</h2>
                 <div class="order-grid">
                     {% for order in in_delivery_orders %}
-                    <div class="order-card">
+                    <div class="order-card" data-device-id="{{ order.device_id }}">
                         <h3>주문자: {{ order.name }}</h3>
                         <p>전화번호: {{ order.phone }}</p>
                         <p>주소: {{ order.address }}</p>
                         <p>주문 시간: {{ order.submitted_at }}</p>
                         <p>승인 시간: {{ order.approved_at }}</p>
+                        <p>기기 ID: {{ order.device_id }}</p>
                         <img src="{{ url_for('static', path=order.photo_path) }}" alt="신분증" style="max-width: 200px;">
                         <h4>주문 상품:</h4>
                         {% for item in order.cart_items %}
@@ -242,13 +262,14 @@
                 <h2>배송 완료 주문</h2>
                 <div class="order-grid">
                     {% for order in completed_orders %}
-                    <div class="order-card">
+                    <div class="order-card" data-device-id="{{ order.device_id }}">
                         <h3>주문자: {{ order.name }}</h3>
                         <p>전화번호: {{ order.phone }}</p>
                         <p>주소: {{ order.address }}</p>
                         <p>주문 시간: {{ order.submitted_at }}</p>
                         <p>승인 시간: {{ order.approved_at }}</p>
                         <p>완료 시간: {{ order.completed_at }}</p>
+                        <p>기기 ID: {{ order.device_id }}</p>
                         <img src="{{ url_for('static', path=order.photo_path) }}" alt="신분증" style="max-width: 200px;">
                         <h4>주문 상품:</h4>
                         {% for item in order.cart_items %}
@@ -277,12 +298,13 @@
                 <h2>취소된 주문</h2>
                 <div class="order-grid">
                     {% for order in cancelled_orders %}
-                    <div class="order-card">
+                    <div class="order-card" data-device-id="{{ order.device_id }}">
                         <h3>주문자: {{ order.name }}</h3>
                         <p>전화번호: {{ order.phone }}</p>
                         <p>주소: {{ order.address }}</p>
                         <p>주문 시간: {{ order.submitted_at }}</p>
                         <p>취소 시간: {{ order.deleted_at }}</p>
+                        <p>기기 ID: {{ order.device_id }}</p>
                         <img src="{{ url_for('static', path=order.photo_path) }}" alt="신분증" style="max-width: 200px;">
                         <h4>주문 상품:</h4>
                         {% for item in order.cart_items %}
@@ -309,7 +331,7 @@
                 </form>
                 <div class="order-grid">
                     {% for order in trash_data %}
-                    <div class="order-card">
+                    <div class="order-card" data-device-id="{{ order.device_id }}">
                         <h3>주문자: {{ order.name }}</h3>
                         <p>전화번호: {{ order.phone }}</p>
                         <p>주소: {{ order.address }}</p>
@@ -321,6 +343,7 @@
                         <p>완료 시간: {{ order.completed_at }}</p>
                         {% endif %}
                         <p>삭제 시간: {{ order.deleted_at }}</p>
+                        <p>기기 ID: {{ order.device_id }}</p>
                         <img src="{{ url_for('static', path=order.photo_path) }}" alt="신분증" style="max-width: 200px;">
                         <h4>주문 상품:</h4>
                         {% for item in order.cart_items %}
@@ -334,11 +357,6 @@
                         </div>
                         {% endfor %}
                         <div class="total-amount">총 금액: {{ "{:,}".format(order.total_amount) }}원</div>
-                        <div class="button-group">
-                            <form action="{{ url_for('restore_order', trash_index=loop.index0) }}" method="post">
-                                <button type="submit" class="button button-primary">복원</button>
-                            </form>
-                        </div>
                     </div>
                     {% endfor %}
                 </div>
@@ -442,17 +460,39 @@
         }
 
         // 탭 전환 처리
-        function showSection(sectionId) {
+        function showTab(tabId) {
+            // 모든 섹션 숨기기
             document.querySelectorAll('.order-section').forEach(section => {
                 section.style.display = 'none';
             });
-            document.getElementById(sectionId).style.display = 'block';
             
-            // 탭 활성화 상태 업데이트
-            document.querySelectorAll('.tab-button').forEach(tab => {
-                tab.classList.remove('active');
+            // 선택된 섹션 표시
+            document.getElementById(tabId).style.display = 'block';
+            
+            // 탭 버튼 스타일 업데이트
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
             });
-            document.querySelector(`[onclick="showSection('${sectionId}')"]`).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function filterOrders() {
+            const deviceId = document.getElementById('device-filter').value.toLowerCase();
+            const orderCards = document.querySelectorAll('.order-card');
+            
+            orderCards.forEach(card => {
+                const cardDeviceId = card.getAttribute('data-device-id');
+                const matchesDevice = !deviceId || (cardDeviceId && cardDeviceId.toLowerCase().includes(deviceId));
+                card.style.display = matchesDevice ? 'block' : 'none';
+            });
+        }
+
+        function clearFilters() {
+            document.getElementById('device-filter').value = '';
+            const orderCards = document.querySelectorAll('.order-card');
+            orderCards.forEach(card => {
+                card.style.display = 'block';
+            });
         }
 
         // 페이지 로드 시 실행
@@ -461,7 +501,7 @@
             // 10초마다 주문 데이터 업데이트
             setInterval(fetchAdminOrders, 10000);
             // 기본 탭 표시
-            showSection('pending');
+            showTab('pending');
         });
     </script>
     {% endif %}

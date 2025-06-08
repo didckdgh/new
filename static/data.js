@@ -1,21 +1,19 @@
 // 전역으로 products 할당
 window.products = [
     {
-        name: "프리미엄 기계식 키보드",
-        basePrice: 189000,
+        name: "혼마구로 세트",
+        basePrice: 55000,
         category: "keyboard",
         options: [
-            { name: "청축", weight: 1.2, price: 158000 },
-            { name: "갈축", weight: 1.2, price: 158000 },
-            { name: "적축", weight: 1.2, price: 158000 },
-            { name: "흑축", weight: 1.2, price: 168000 }
+            { name: "1세트", weight: 1.2, price: 55000 },
+            { name: "2세트", weight: 1.2, price: 100000 }
         ],
-        imageUrl: "/static/images/products/keyboard1.jpg",
+        imageUrl: "/static/images/products/ghsakrnfh1.jpg",
         extraImages: [
             "/static/images/products/keyboard2.jpg",
             "/static/images/products/keyboard3.jpg"
         ],
-        description: "PBT 키캡과 알루미늄 바디로 제작된 프리미엄 기계식 키보드입니다."
+        description: "배꼽살 5점, 가마도로 5점 오도로 5점 주도로 10점, 적신 5점 으로 이루어진 혼마구로 세트입니다"
     },
     {
         name: "무선 게이밍 마우스",

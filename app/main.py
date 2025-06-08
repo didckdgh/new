@@ -116,9 +116,10 @@ async def submit_user(
     phone: str = Form(...),
     address: str = Form(...),
     cart: str = Form(...),
+    device_id: str = Form(...),
     payment_image: UploadFile = File(...)
 ):
-    print(f"[주문 제출] 이름: {name}, 전화번호: {phone}")  # 로깅 추가
+    print(f"[주문 제출] 이름: {name}, 전화번호: {phone}, 기기 ID: {device_id}")  # 로깅 추가
 
     if not payment_image.filename:
         raise HTTPException(status_code=400, detail="사진이 업로드되지 않았습니다.")
@@ -162,12 +163,13 @@ async def submit_user(
         "submitted_at": now.strftime("%Y-%m-%d %H:%M:%S"),
         "cart_items": cart_items,
         "total_amount": total_amount,
-        "status": "상품준비중"
+        "status": "상품준비중",
+        "device_id": device_id
     }
 
     # 주문 추가
     pending_orders.append(order_data)
-    print(f"[주문 추가] ID: {order_data['id']}, 총 금액: {total_amount}")  # 로깅 추가
+    print(f"[주문 추가] ID: {order_data['id']}, 총 금액: {total_amount}, 기기 ID: {device_id}")  # 로깅 추가
 
     # 캐시 무효화
     invalidate_cache()
@@ -362,24 +364,17 @@ async def delete_user_order(category: str, order_index: int):
             order_to_delete = all_orders[order_index]
             source_list = order_to_delete["source_list"]
             
-            # 배송중인 주문은 취소할 수 없음
-            if order_to_delete["status"] == "배송중":
-                raise HTTPException(status_code=400, detail="배송중인 주문은 취소할 수 없습니다.")
+            # 상품준비중 상태일 때만 취소 가능
+            if order_to_delete["status"] != "상품준비중":
+                raise HTTPException(status_code=400, detail="상품 준비중인 주문만 취소할 수 있습니다.")
             
             # 원본 리스트에서 주문 찾아서 처리
             for i, order in enumerate(source_list):
                 if order["id"] == order_to_delete["id"]:
                     deleted_order = source_list.pop(i)
                     deleted_order["deleted_at"] = datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S")
-                    
-                    # 상품준비중 상태일 때는 주문 취소로 처리
-                    if category == "pending":
-                        deleted_order["status"] = "주문취소"
-                        cancelled_orders.append(deleted_order)
-                    # 배송완료 상태일 때는 기록 삭제로 처리
-                    elif category == "completed":
-                        deleted_order["status"] = "기록삭제"
-                        trash_data.append(deleted_order)
+                    deleted_order["status"] = "주문취소"
+                    cancelled_orders.append(deleted_order)
                     break
         else:
             raise HTTPException(status_code=404, detail="주문을 찾을 수 없습니다.")

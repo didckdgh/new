@@ -1,10 +1,20 @@
 // 장바구니 데이터 초기화
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
+// 장바구니 초기화 시 device_id 생성
+function getDeviceId() {
+    let deviceId = localStorage.getItem('device_id');
+    if (!deviceId) {
+        deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('device_id', deviceId);
+    }
+    return deviceId;
+}
+
 // 장바구니 아이템 렌더링
 function renderCartItems() {
-    // 항상 최신 cart를 localStorage에서 읽음
-    cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const deviceId = getDeviceId();
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
     const cartItemsContainer = document.getElementById('cart-items');
     
     if (cart.length === 0) {
@@ -61,54 +71,49 @@ function renderCartItems() {
 
 // 장바구니 아이템 수정
 window.editCartItem = function(index) {
+    const deviceId = getDeviceId();
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
     const item = cart[index];
     const product = window.products.find(p => p.name === item.productId);
     
     if (!product) return;
 
-    const modal = document.getElementById('edit-modal');
-    const quantityInput = document.getElementById('edit-quantity');
-    const optionSelect = document.getElementById('edit-option');
-    const priceDisplay = document.getElementById('edit-price');
-    const modalImage = document.getElementById('edit-modal-image');
+    const modal = document.getElementById('option-modal');
+    const optionSelect = document.getElementById('option-select');
+    const quantityInput = document.getElementById('option-quantity');
+    const productName = document.getElementById('option-product-name');
+    const productImage = document.getElementById('option-product-image');
+    const productPrice = document.getElementById('option-product-price');
 
-    // 모달 이미지 업데이트
-    modalImage.src = product.imageUrl;
-    
-    // 수량 설정
+    // 옵션 선택지 초기화
+    optionSelect.innerHTML = '';
+    Object.entries(product.options).forEach(([key, option]) => {
+        const optionElement = document.createElement('option');
+        optionElement.value = key;
+        optionElement.textContent = `${option.name} (+${option.price.toLocaleString()}원)`;
+        if (option.name === item.option) {
+            optionElement.selected = true;
+        }
+        optionSelect.appendChild(optionElement);
+    });
+
+    productName.textContent = product.name;
+    productImage.src = product.imageUrl;
+    productPrice.textContent = `${product.price.toLocaleString()}원`;
     quantityInput.value = item.quantity;
-    
-    // 옵션 목록 생성
-    optionSelect.innerHTML = product.options.map((opt, i) => `
-        <option value="${i}" ${opt.name === item.option ? 'selected' : ''}>
-            ${opt.name} - ${opt.price.toLocaleString()}원
-        </option>
-    `).join('');
-    
-    // 가격 표시 업데이트
-    const selectedOption = product.options[optionSelect.value];
-    priceDisplay.textContent = (selectedOption.price * parseInt(quantityInput.value)).toLocaleString();
-    
-    // 수량이나 옵션 변경시 가격 업데이트
-    const updatePrice = () => {
-        const option = product.options[optionSelect.value];
-        const quantity = parseInt(quantityInput.value);
-        priceDisplay.textContent = (option.price * quantity).toLocaleString();
-    };
-    
-    quantityInput.oninput = updatePrice;
-    optionSelect.onchange = updatePrice;
-    
+
     // 수정 완료 핸들러
     window.updateCartItem = function() {
         const selectedOption = product.options[optionSelect.value];
         const quantity = parseInt(quantityInput.value);
         
         cart[index] = {
-            ...item,
+            deviceId,
+            productId: item.productId,
+            name: product.name,
             option: selectedOption.name,
             optionPrice: selectedOption.price,
-            quantity: quantity,
+            quantity,
             totalPrice: selectedOption.price * quantity
         };
         
@@ -123,6 +128,7 @@ window.editCartItem = function(index) {
 // 장바구니 아이템 삭제
 window.deleteCartItem = function(index) {
     if (!confirm('이 상품을 장바구니에서 삭제하시겠습니까?')) return;
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
     cart.splice(index, 1);
     localStorage.setItem('cart', JSON.stringify(cart));
     renderCartItems();
@@ -132,7 +138,31 @@ window.deleteCartItem = function(index) {
 window.clearCart = function() {
     if (!confirm('장바구니를 비우시겠습니까?')) return;
     localStorage.removeItem('cart');
-    cart = [];
+    renderCartItems();
+};
+
+// 장바구니 아이템 추가
+window.addToCart = function(productId, option, quantity) {
+    const deviceId = getDeviceId();
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const product = window.products.find(p => p.name === productId);
+    
+    if (!product) return;
+
+    const selectedOption = product.options[option];
+    const totalPrice = selectedOption.price * quantity;
+
+    cart.push({
+        deviceId,
+        productId,
+        name: product.name,
+        option: selectedOption.name,
+        optionPrice: selectedOption.price,
+        quantity,
+        totalPrice
+    });
+
+    localStorage.setItem('cart', JSON.stringify(cart));
     renderCartItems();
 };
 
